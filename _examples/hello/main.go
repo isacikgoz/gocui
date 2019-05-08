@@ -23,10 +23,7 @@ func main() {
 	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("hello", gocui.KeyCtrlJ, gocui.ModNone, exut); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModCtrl, quit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -46,8 +43,8 @@ func layout(g *gocui.Gui) error {
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
-	log.Fatal("quit")
-	return nil
+	//log.Fatal("quit")
+	return gocui.ErrQuit
 }
 
 func exut(g *gocui.Gui, v *gocui.View) error {

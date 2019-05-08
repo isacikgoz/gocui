@@ -17,18 +17,6 @@ type keybinding struct {
 	handler  func(*Gui, *View) error
 }
 
-// newKeybinding returns a new Keybinding object.
-func newKeybinding(viewname string, key Key, ch rune, mod Modifier, handler func(*Gui, *View) error) (kb *keybinding) {
-	kb = &keybinding{
-		viewName: viewname,
-		key:      key,
-		ch:       ch,
-		mod:      mod,
-		handler:  handler,
-	}
-	return kb
-}
-
 // matchKeypress returns if the keybinding matches the keypress.
 func (kb *keybinding) matchKeypress(key Key, ch rune, mod Modifier) bool {
 	return kb.key == key && kb.ch == ch && kb.mod == mod
@@ -123,6 +111,8 @@ type Modifier tcell.ModMask
 
 // Modifiers.
 const (
-	ModNone Modifier = Modifier(0)
+	ModNone Modifier = Modifier(tcell.ModNone)
 	ModAlt           = Modifier(tcell.ModAlt)
+	ModCtrl          = Modifier(tcell.ModCtrl)
+	ModMeta          = Modifier(tcell.ModMeta)
 )

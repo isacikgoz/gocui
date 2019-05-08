@@ -31,8 +31,6 @@ func simpleEditor(v *View, key Key, ch rune, mod Modifier) {
 	switch {
 	case ch != 0 && mod == 0:
 		v.EditWrite(ch)
-	case key == KeySpace:
-		v.EditWrite(' ')
 	case key == KeyBackspace || key == KeyBackspace2:
 		v.EditDelete(true)
 	case key == KeyDelete:

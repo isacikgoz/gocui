@@ -52,10 +52,10 @@ func main() {
 
 	g.SetManagerFunc(layout)
 
-	if err := g.SetKeybinding("main", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+	if err := g.SetKeybinding("main", gocui.KeyCtrlC, gocui.ModCtrl, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("main", gocui.KeyCtrlI, gocui.ModNone, overwrite); err != nil {
+	if err := g.SetKeybinding("main", gocui.KeyCtrlI, gocui.ModCtrl, overwrite); err != nil {
 		log.Panicln(err)
 	}
 

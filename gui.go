@@ -366,14 +366,21 @@ func (g *Gui) CurrentView() *View {
 // (empty string) then the keybinding will apply to all views. key must
 // be a rune or a Key.
 func (g *Gui) SetKeybinding(viewname string, key interface{}, mod Modifier, handler func(*Gui, *View) error) error {
-	var kb *keybinding
 
 	k, ch, err := getKey(key)
+	if k == KeySpace {
+		ch = ' '
+	}
 	if err != nil {
 		return err
 	}
-	kb = newKeybinding(viewname, k, ch, mod, handler)
-	g.keybindings = append(g.keybindings, kb)
+	g.keybindings = append(g.keybindings, &keybinding{
+		viewName: viewname,
+		key:      k,
+		ch:       ch,
+		mod:      mod,
+		handler:  handler,
+	})
 	return nil
 }
 
@@ -411,7 +418,7 @@ func getKey(key interface{}) (Key, rune, error) {
 	case Key:
 		return t, 0, nil
 	case rune:
-		return 0, t, nil
+		return 256, t, nil
 	default:
 		return 0, 0, errors.New("unknown type")
 	}
@@ -746,7 +753,7 @@ func (g *Gui) execKeybindings(v *View, ev *Event) (matched bool, err error) {
 		if kb.handler == nil {
 			continue
 		}
-
+		//log.Fatalf("match: %t, found: %t", kb.matchView(v), kb.matchKeypress(Key(ev.Key), ev.Ch, Modifier(ev.Mod)))
 		if kb.matchKeypress(Key(ev.Key), ev.Ch, Modifier(ev.Mod)) && kb.matchView(v) {
 			if err := kb.handler(g, v); err != nil {
 				return false, err
