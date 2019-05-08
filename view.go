@@ -10,13 +10,15 @@ import (
 	"io"
 	"strings"
 
-	"github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell"
 )
 
 // A View is a window. It maintains its own internal buffer and cursor
 // position.
 type View struct {
 	name           string
+	screen         tcell.Screen
+	outputMode     OutputMode
 	x0, y0, x1, y1 int
 	ox, oy         int
 	cx, cy         int
@@ -95,17 +97,19 @@ func (l lineType) String() string {
 }
 
 // newView returns a new View object.
-func newView(name string, x0, y0, x1, y1 int, mode OutputMode) *View {
+func newView(name string, screen tcell.Screen, outputMode OutputMode, x0, y0, x1, y1 int, mode OutputMode) *View {
 	v := &View{
-		name:    name,
-		x0:      x0,
-		y0:      y0,
-		x1:      x1,
-		y1:      y1,
-		Frame:   true,
-		Editor:  DefaultEditor,
-		tainted: true,
-		ei:      newEscapeInterpreter(mode),
+		name:       name,
+		screen:     screen,
+		outputMode: outputMode,
+		x0:         x0,
+		y0:         y0,
+		x1:         x1,
+		y1:         y1,
+		Frame:      true,
+		Editor:     DefaultEditor,
+		tainted:    true,
+		ei:         newEscapeInterpreter(mode),
 	}
 	return v
 }
@@ -153,9 +157,8 @@ func (v *View) setRune(x, y int, ch rune, fgColor, bgColor Attribute) error {
 		bgColor = v.SelBgColor
 	}
 
-	termbox.SetCell(v.x0+x+1, v.y0+y+1, ch,
-		termbox.Attribute(fgColor), termbox.Attribute(bgColor))
-
+	st := mkStyle(v.outputMode, fgColor, bgColor)
+	v.screen.SetContent(v.x0+x+1, v.y0+y+1, ch, nil, st)
 	return nil
 }
 
@@ -402,8 +405,8 @@ func (v *View) clearRunes() {
 	maxX, maxY := v.Size()
 	for x := 0; x < maxX; x++ {
 		for y := 0; y < maxY; y++ {
-			termbox.SetCell(v.x0+x+1, v.y0+y+1, ' ',
-				termbox.Attribute(v.FgColor), termbox.Attribute(v.BgColor))
+			st := mkStyle(v.outputMode, v.FgColor, v.BgColor)
+			v.screen.SetContent(v.x0+x+1, v.y0+y+1, ' ', nil, st)
 		}
 	}
 }

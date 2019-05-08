@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/encoding"
 )
 
 var (
@@ -100,7 +101,7 @@ type Gui struct {
 // NewGui returns a new Gui object with a given output mode.
 func NewGui(mode OutputMode) (*Gui, error) {
 	g := &Gui{}
-
+	encoding.Register()
 	if s, e := tcell.NewScreen(); e != nil {
 		return nil, e
 	} else if e = s.Init(); e != nil {
@@ -109,7 +110,6 @@ func NewGui(mode OutputMode) (*Gui, error) {
 		g.screen = s
 	}
 	g.outputMode = g.setOutputMode(mode)
-
 	g.tbEvents = make(chan Event, 20)
 	g.userEvents = make(chan userEvent, 20)
 
@@ -149,11 +149,11 @@ func (g *Gui) setOutputMode(mode OutputMode) OutputMode {
 	}
 }
 
-func (g *Gui) fixColor(c tcell.Color) tcell.Color {
+func fixColor(outputMode OutputMode, c tcell.Color) tcell.Color {
 	if c == tcell.ColorDefault {
 		return c
 	}
-	switch g.outputMode {
+	switch outputMode {
 	case OutputNormal:
 		c %= tcell.Color(16)
 	case Output256:
@@ -170,14 +170,14 @@ func (g *Gui) fixColor(c tcell.Color) tcell.Color {
 	return c
 }
 
-func (g *Gui) mkStyle(fg, bg Attribute) tcell.Style {
+func mkStyle(outputMode OutputMode, fg, bg Attribute) tcell.Style {
 	st := tcell.StyleDefault
 
 	f := tcell.Color(int(fg)&0x1ff) - 1
 	b := tcell.Color(int(bg)&0x1ff) - 1
 
-	f = g.fixColor(f)
-	b = g.fixColor(b)
+	f = fixColor(outputMode, f)
+	b = fixColor(outputMode, b)
 	st = st.Foreground(f).Background(b)
 	if (fg|bg)&AttrBold != 0 {
 		st = st.Bold(true)
@@ -226,7 +226,7 @@ func (g *Gui) SetRune(x, y int, ch rune, fgColor, bgColor Attribute) error {
 	if x < 0 || y < 0 || x >= g.maxX || y >= g.maxY {
 		return errors.New("invalid point")
 	}
-	st := g.mkStyle(fgColor, bgColor)
+	st := mkStyle(g.outputMode, fgColor, bgColor)
 	g.screen.SetContent(x, y, ch, nil, st)
 	return nil
 }
@@ -263,7 +263,7 @@ func (g *Gui) SetView(name string, x0, y0, x1, y1 int) (*View, error) {
 		return v, nil
 	}
 
-	v := newView(name, x0, y0, x1, y1, g.outputMode)
+	v := newView(name, g.screen, g.outputMode, x0, y0, x1, y1, g.outputMode)
 	v.BgColor, v.FgColor = g.BgColor, g.FgColor
 	v.SelBgColor, v.SelFgColor = g.SelBgColor, g.SelFgColor
 	g.views = append(g.views, v)
@@ -534,7 +534,7 @@ func (g *Gui) handleEvent(ev *Event) error {
 
 // flush updates the gui, re-drawing frames and buffers.
 func (g *Gui) flush() error {
-	st := g.mkStyle(g.FgColor, g.BgColor)
+	st := mkStyle(g.outputMode, g.FgColor, g.BgColor)
 	w, h := g.screen.Size()
 	for row := 0; row < h; row++ {
 		for col := 0; col < w; col++ {
@@ -741,10 +741,12 @@ func (g *Gui) onKey(ev *Event) error {
 // and event. The value of matched is true if there is a match and no errors.
 func (g *Gui) execKeybindings(v *View, ev *Event) (matched bool, err error) {
 	matched = false
+
 	for _, kb := range g.keybindings {
 		if kb.handler == nil {
 			continue
 		}
+
 		if kb.matchKeypress(Key(ev.Key), ev.Ch, Modifier(ev.Mod)) && kb.matchView(v) {
 			if err := kb.handler(g, v); err != nil {
 				return false, err

@@ -20,10 +20,15 @@ func main() {
 
 	g.SetManagerFunc(layout)
 
+	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-
+	if err := g.SetKeybinding("hello", gocui.KeyCtrlJ, gocui.ModNone, exut); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
@@ -41,5 +46,11 @@ func layout(g *gocui.Gui) error {
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
-	return gocui.ErrQuit
+	log.Fatal("quit")
+	return nil
+}
+
+func exut(g *gocui.Gui, v *gocui.View) error {
+	log.Fatal("exit")
+	return nil
 }

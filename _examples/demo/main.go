@@ -82,6 +82,7 @@ func delMsg(g *gocui.Gui, v *gocui.View) error {
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
+	g.Close()
 	return gocui.ErrQuit
 }
 
