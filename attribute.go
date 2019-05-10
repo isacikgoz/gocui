@@ -13,7 +13,11 @@ type Attribute uint16
 const (
 	ColorDefault Attribute = iota
 	ColorBlack
-	ColorRed
+)
+
+// the colors are a little different in tcell
+const (
+	ColorRed Attribute = iota + 10
 	ColorGreen
 	ColorYellow
 	ColorBlue
